@@ -903,17 +903,20 @@ do not belong to  project files"
     (when prj-directory
       (setq dir (expand-file-name (or dir ".") prj-directory))
       )
+    (if dir (cd dir))
     (cond ((string-match "^-e +" cmd)
            (setq cmd (read (substring cmd (match-end 0))))
            (unless (commandp cmd)
              (setq cmd `(lambda () (interactive) ,cmd))
              )
-           (if dir (cd dir))
            (command-execute cmd)
+           )
+          ((string-match "\\(.+\\)& *$" cmd)
+           (start-process-shell-command "eproject-async" nil (match-string 1 cmd))
+           (message (match-string 1 cmd))
            )
           (t
            (prj-setup-tool-window)
-           (if dir (cd dir))
            (compile cmd)
            ))))
 
