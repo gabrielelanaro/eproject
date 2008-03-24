@@ -746,12 +746,18 @@ do not belong to  project files"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set menus
 
+(defun prj-list-sorted ()
+  (sort (append prj-list nil) 
+        '(lambda (a b) (string-lessp (car a) (car b)))
+        ))
+
 (defun prj-setmenu ()
   (let ((f (consp prj-current)) m1 m2 m3)
+   
     (setq m1 
           (list
            `("Open" open
-             ,@(prj-menulist-maker prj-list prj-current 'prj-menu-open)
+             ,@(prj-menulist-maker (prj-list-sorted) prj-current 'prj-menu-open)
              ("--")
              ("Add ..." "Add new or existing project to the list" . eproject-add) 
              ("Remove ..." "Remove project from the list" . eproject-remove) 
@@ -785,7 +791,7 @@ do not belong to  project files"
 
 (defun prj-menu-open ()
   (interactive)
-  (let ((a (nth last-command-event prj-list)))
+  (let ((a (nth last-command-event (prj-list-sorted))))
     (if a (eproject-open (car a)))
     ))
 
