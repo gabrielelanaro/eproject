@@ -149,7 +149,7 @@
                             License
                             =======
 
-  eproject 0.1
+  eproject 0.2
   Copyright (C) 2008 grischka@users.sourceforge.net
 
   This program is free software, released under the GNU General Public

@@ -6,7 +6,7 @@
 ;;
 ;; Author: grischka -- grischka@users.sourceforge.net 
 ;; Created: 24 Jan 2008
-;; Version: 0.1
+;; Version: 0.2
 ;;
 ;; This program is free software, released under the GNU General
 ;; Public License (GPL, version 2). For details see:
