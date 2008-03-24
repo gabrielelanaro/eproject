@@ -79,8 +79,11 @@
      ("Clean"        "make clean" "C-f9")
      ("Run"          "echo run what" "f8")
      ("Stop"         "-e eproject-killtool" "C-f8")
-     ("---")         ;; menu separator
+     ("---")       
      ("Configure"    "./configure")
+     ("---")       
+     ("Explore Project" "nautilus --browser `pwd` &")
+     ("XTerm In Project" "xterm &")
      )))
   )
 
