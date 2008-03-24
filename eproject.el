@@ -925,7 +925,7 @@ do not belong to  project files"
            (message (match-string 1 cmd))
            )
           (t
-           (prj-setup-tool-window)
+           ;;(prj-setup-tool-window)
            (compile cmd)
            ))))
 
@@ -1069,7 +1069,9 @@ do not belong to  project files"
         (modify-frame-parameters prj-initial-frame prj-frame-pos)
         ;; emacs bug: when it's too busy it doesn't set frames correctly.
         (sit-for 0.2)
-        ))))
+        )))
+  (ecb-activate)
+  )
 
 (defun prj-command-line-switch (option)
   (setq prj-last-open (pop argv))
