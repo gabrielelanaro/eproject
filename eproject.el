@@ -757,7 +757,7 @@ do not belong to  project files"
     (setq m1 
           (list
            `("Open" open
-             ,@(prj-menulist-maker (prj-list-sorted) prj-current 'prj-menu-open)
+             ,@(prj-menulist-maker prj-list prj-current 'prj-menu-open)
              ("--")
              ("Add ..." "Add new or existing project to the list" . eproject-add) 
              ("Remove ..." "Remove project from the list" . eproject-remove) 
@@ -791,7 +791,7 @@ do not belong to  project files"
 
 (defun prj-menu-open ()
   (interactive)
-  (let ((a (nth last-command-event (prj-list-sorted))))
+  (let ((a (nth last-command-event prj-list)))
     (if a (eproject-open (car a)))
     ))
 
@@ -824,30 +824,45 @@ do not belong to  project files"
 	(if s (prj-menu-maker map s v))
 	))))
 
+(defun prj-copy-head (l n) 
+  (let (r) 
+    (while (and l (> n 0))
+      (push (pop l) r)
+      (setq n (1- n))
+      )
+    (nreverse r)
+    ))
+
+(defun prj-split-list (l n)
+  (let (r)
+    (while l
+      (push (prj-copy-head l n) r)
+      (setq l (nthcdr n l))
+      )
+    (nreverse r)
+    ))
+    
 (defun prj-menulist-maker (l act fns)
-  (let (r n m e f s x y z (w 36))
+  (let (r (w 30) s (m 0) (n 0) k)
     (cond
      ((< (length l) w)
-      (prj-menulist-maker-1 (list l fns 0) act)
+      (prj-menulist-maker-1 (list l fns n) act)
       )
      (t
       ;; menu too long; split into submenus
-      (setq l (append l nil) n 0 m 0)
-      (while l
-	(setq z w)
-	(setq e (cdr (setq s (nthcdr (1- z) l))))
-	(if s (setcdr s nil))
-	(while (and e (string-match "^--" (caar e)))
-	  (setq e (cdr e) z (1+ z))
-	  )
+      (setq s (prj-split-list l w))
+      (setq k (prj-menulist-maker-1 (list (append (pop s) '(("--"))) fns n) act))
+      (setq r (nreverse k))
+      (dolist (l s) 
+	(when (consp fns) 
+          (setq fns (nthcdr w fns))
+          )
+        (setq n (+ n w))
+        (setq k (prj-menulist-maker-1 (list l fns n) act))
       	(push (cons (concat (prj-shortname (caar l)) " ...")
 		    (cons (intern (format "m_%d" (setq m (1+ m))))
-			  (prj-menulist-maker-1 (list l fns n) act)
-			  )) r)
-	(setq l e)
-	(if (consp fns) (setq fns (nthcdr z fns)))
-        (setq n (+ n z))
-	)
+                          k)) r)
+        )
       (nreverse r)
       ))))
 
@@ -925,7 +940,7 @@ do not belong to  project files"
            (message (match-string 1 cmd))
            )
           (t
-           ;;(prj-setup-tool-window)
+           (prj-setup-tool-window)
            (compile cmd)
            ))))
 
@@ -1070,7 +1085,7 @@ do not belong to  project files"
         ;; emacs bug: when it's too busy it doesn't set frames correctly.
         (sit-for 0.2)
         )))
-  (ecb-activate)
+  ;;(ecb-activate)
   )
 
 (defun prj-command-line-switch (option)
