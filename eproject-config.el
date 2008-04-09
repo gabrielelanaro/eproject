@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (C) 2008 grischka
 ;;
-;; Author: grischka -- grischka@users.sourceforge.net 
+;; Author: grischka -- grischka@users.sourceforge.net
 ;; Created: 24 Jan 2008
 ;; Version: 0.2
 ;;
@@ -13,7 +13,7 @@
 ;;
 ;;     http://www.fsf.org/licenses/gpl.html
 ;;
-;; This program is distributed in the hope that it will be useful, 
+;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 ;; General Public License for more details.
@@ -34,16 +34,16 @@
 (defvar prj-groups)
 (defvar prj-active-group nil)
 (defvar prj-group-top nil)
-(defvar prj-group-left nil) 
-(defvar prj-group-tab nil) 
+(defvar prj-group-left nil)
+(defvar prj-group-tab nil)
 
 ;; tab menus
 (defvar prj-links)
 
 ;; quick search
 (defvar prj-qs-face nil)
-(defvar prj-qs-str nil) 
-(defvar prj-qs-len nil) 
+(defvar prj-qs-str nil)
+(defvar prj-qs-len nil)
 (defvar prj-qs-pos nil)
 
 ;; from eproject.el
@@ -80,10 +80,10 @@
   (interactive)
   (let ((map (make-keymap)))
 
-    (substitute-key-definition 
-      'self-insert-command 
+    (substitute-key-definition
+      'self-insert-command
       'prj-qsearch
-      map 
+      map
       global-map
       )
 
@@ -141,7 +141,7 @@
     (cond ((and alive prj-edit-mode)
            (bury-buffer prj-buffer)
            )
-          (t 
+          (t
            (when alive
              (kill-buffer prj-buffer)
              )
@@ -190,14 +190,14 @@
 
 (defun prj-save-window-pos ()
   (p-set (prj-active-group . :pos)
-     (list  
+     (list
       (window-start (selected-window))
       (- (line-number-at-pos) prj-group-top)
       )))
 
 (defun prj-config-reset ()
   (dolist (s prj-groups)
-    (p-set (s . :pos) (list 1 0)) 
+    (p-set (s . :pos) (list 1 0))
     )
   (setq prj-active-group (car prj-groups))
   )
@@ -209,7 +209,7 @@
       prj-hilight-bar
       prj-hilight-bar-2
       prj-edit-mode
-      )) 
+      ))
     (set v nil)
     ))
 
@@ -223,39 +223,39 @@
         (let (l r e s)
           (goto-line prj-group-top)
 
-          (if (eq 'u (car prj-active-group)) 
-              (read (concat "((" 
-                            (buffer-substring-no-properties (point) (point-max)) 
+          (if (eq 'u (car prj-active-group))
+              (read (concat "(("
+                            (buffer-substring-no-properties (point) (point-max))
                             "))"))
 
             (while (< (point) (point-max))
               (setq e (line-end-position))
-              (setq r 
-              
-  (cond ((re-search-forward 
-          "^ *\\[[-+]\\] +\\([^ ]\\(.+[^ ]\\)?\\) *$" 
+              (setq r
+
+  (cond ((re-search-forward
+          "^ *\\[[-+]\\] +\\([^ ]\\(.+[^ ]\\)?\\) *$"
           e t)
          (list ">" (match-string-no-properties 1))
          )
-        ((re-search-forward 
-          "^ *==+ *$" 
+        ((re-search-forward
+          "^ *==+ *$"
           e t)
          (list "<")
          )
         ((re-search-forward
-          "^ *\\([^ ()]\\([^()]*[^ ()]\\)?\\) *\\((.+)\\)? *:\\( +\\(.*[^ ]\\)\\)? *$" 
+          "^ *\\([^ ()]\\([^()]*[^ ()]\\)?\\) *\\((.+)\\)? *:\\( +\\(.*[^ ]\\)\\)? *$"
           e t)
          (setq s (match-string-no-properties 3))
          (cons (match-string-no-properties 1)
                (cons (or (match-string-no-properties 5) "")
                      (and s (list (substring s 1 -1)))
                      )))
-        ((re-search-forward 
-          "^ *\\([^ ]\\(.*[^ ]\\)?\\) *$" 
+        ((re-search-forward
+          "^ *\\([^ ]\\(.*[^ ]\\)?\\) *$"
           e t)
          (list (match-string-no-properties 1))
          )))
-        
+
               (when r
                 (setq l (cons r l))
                 )
@@ -268,7 +268,7 @@
     (let ((s (prj-scan-group)))
       (if s (p-call (prj-active-group . :parse) (car s)))
       ))
-      
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The project config window
 
@@ -277,7 +277,7 @@
 (defvar prj-groups `(
 
    (p nil
-      :title "Projects" 
+      :title "Projects"
       :comment "All projects on a list"
       :pos (1 0)
       :list prj-list
@@ -286,14 +286,14 @@
                (prj-link (car a) nil a)
                (prj-link-2 nil p (cadr a))
                )
-      :parse ,(lambda (s) 
+      :parse ,(lambda (s)
                (dolist (a s)
                  (unless (cadr a)
                    (error "Error: Project directory empty.")
                    ))
                (setq prj-list s)
                (let ((a (rassoc (cdr prj-current) s)))
-                 (when a 
+                 (when a
                    (setq prj-current a)
                    (prj-setconfig "project-name" (car a))
                    )))
@@ -301,7 +301,7 @@
       )
 
    (f nil
-      :title "Files" 
+      :title "Files"
       :comment "The files that belong to the project"
       :pos (1 0)
       :list prj-files
@@ -309,7 +309,7 @@
       :print ,(lambda (a p)
                (prj-link (car a) nil a)
                )
-      :parse ,(lambda (s)  
+      :parse ,(lambda (s)
                 (let (b)
                   (dolist (l s)
                     (setcdr l (cdr (assoc (car l) prj-files)))
@@ -325,11 +325,11 @@
       )
 
    (t nil
-      :title "Tools" 
+      :title "Tools"
       :comment "Configurable tools and keyboard shortcuts"
       :pos (1 0)
       :list prj-tools
-      :exec prj-run-tool 
+      :exec prj-run-tool
       :print ,(lambda (a p)
                (prj-link (car a) nil a)
                (when (caddr a)
@@ -341,14 +341,14 @@
                (when (cadr a)
                  (prj-link-2 nil p (cadr a))
                  ))
-      :parse ,(lambda (s)  
+      :parse ,(lambda (s)
                (setq prj-tools s)
                )
       :menu ()
       )
 
    (s nil
-      :title "Settings" 
+      :title "Settings"
       :comment "Project options"
       :pos (1 0)
       :list prj-config
@@ -356,7 +356,7 @@
       :print ,(lambda (a p)
                (prj-link-2 (car a) p (or (cdr a) ""))
                )
-      :parse ,(lambda (s) 
+      :parse ,(lambda (s)
                (dolist (l s) (setcdr l (cadr l)))
                (let ((prj-config s) n)
                  (setq n (prj-getconfig "project-name"))
@@ -367,12 +367,13 @@
                    (setcar prj-current n)
                    ))
                (setq prj-config s)
+               (prj-update-config)
                )
       :menu ()
       )
 
 ;;;    (u nil
-;;;       :title "Functions" 
+;;;       :title "Functions"
 ;;;       :comment "ELisP Utitlities"
 ;;;       :pos (1 0)
 ;;;       :list prj-functions
@@ -386,7 +387,7 @@
 ;;;       :menu ()
 ;;;       )
    ))
-   
+
 
 (defvar prj-links '(
 
@@ -454,7 +455,7 @@
 
       (setq prj-group-left (if prj-edit-mode 0 1))
       (setq prj-group-tab (+ 24 prj-group-left))
-      (setq active 
+      (setq active
             (or prj-active-group
                 (setq prj-active-group (car prj-groups))
                 ))
@@ -467,7 +468,7 @@
           (insert-char 32 n)
           (cond (f
                  (setq p (point))
-                 (insert title) 
+                 (insert title)
                  (prj-make-hilite-bar 'prj-hilight-bar-2 p (point))
                  )
                 (t
@@ -501,7 +502,7 @@
       (insert "\n\n")
 
       (when prj-edit-mode
-        (add-text-properties (point-min) (point) 
+        (add-text-properties (point-min) (point)
            '(read-only t intangible t front-sticky t rear-nonsticky t))
         )
 
@@ -516,18 +517,18 @@
       (setq p (p-get (active . :pos)))
       (set-window-start (get-buffer-window prj-buffer) (car p))
       (goto-line (+ prj-group-top (cadr p)))
-      (unless (eobp) 
+      (unless (eobp)
         (forward-char prj-group-left)
         )
       (unless (pos-visible-in-window-p)
         (recenter (/ (window-height) 5))
         )
       (set-buffer-modified-p nil)
-      (cond (prj-edit-mode 
+      (cond (prj-edit-mode
              (buffer-enable-undo)
              (setq cursor-type 'box)
              )
-            (t 
+            (t
              (prj-set-hilite-bar)
              (setq buffer-read-only t)
              (setq cursor-type nil)
@@ -549,7 +550,7 @@
   (if (and prj-edit-mode (null help))
       (insert text)
       (let ((p (point)) (f (if top 'link)))
-        (insert-text-button 
+        (insert-text-button
          text
          'help-echo help
          'action 'prj-action
@@ -602,12 +603,12 @@
 
 (defun prj-define-shortcut (map s fn)
   (let ((c (logior (aref s 0) 32)))
-    (define-key 
-      (or map (current-local-map)) 
-      (read (format "\"\\M-%c\"" c)) 
+    (define-key
+      (or map (current-local-map))
+      (read (format "\"\\M-%c\"" c))
       fn
       )))
-    
+
 (defun prj-config-get-result (id)
   (and (prj-config-active)
        (eq id (car prj-active-group))
@@ -649,14 +650,14 @@
       )
     (setq x (+ x d))
     (unless prj-current (setq n 1))
-    (if cycle 
+    (if cycle
         (if (< x 0) (setq x (1- n)) (if (>= x n) (setq x 0)))
         (setq x (max 0 (min (1- n) x)))
         )
     (setq prj-active-group (nth x prj-groups))
     (prj-config-print)
     ))
-    
+
 (defun prj-enter ()
   (interactive)
   (let (a b)
@@ -688,8 +689,8 @@
 ;; A hook to maintain the selection bar
 
 (defun prj-post-command-hook ()
-  (and 
-   (prj-config-active) 
+  (and
+   (prj-config-active)
    (prj-set-hilite-bar)
    ))
 
@@ -699,12 +700,12 @@
     (let (n m a c e p)
       (setq m (length (eval (p-get (prj-active-group . :list)))))
       (setq p (line-number-at-pos))
-      (setq n (max prj-group-top 
-                   (min (line-number-at-pos) 
+      (setq n (max prj-group-top
+                   (min (line-number-at-pos)
                         (1- (+ prj-group-top m))
                         )))
       (goto-line n)
-      (if (< p n) 
+      (if (< p n)
           (set-window-start nil (point-min))
         )
       (unless (eobp)
@@ -715,18 +716,18 @@
              (= (char-after c) ?:)
              (setq e c)
              )
-        (while (= (char-after) 32) 
+        (while (= (char-after) 32)
           (forward-char 1)
           )
         (prj-make-hilite-bar 'prj-hilight-bar (point) e)
         (prj-save-window-pos)
         ))))
-  
+
 (defun prj-make-hilite-bar (s a e)
   (let (b)
     (if (and (boundp s) (setq b (eval s)))
         (move-overlay b a e)
-        (overlay-put            
+        (overlay-put
            (set s (make-overlay a e))
            'face '(:background "grey90" :foreground "blue")
            ))
@@ -737,7 +738,7 @@
 
 (defun prj-qsearch ()
   (interactive)
-  (setq prj-qs-str 
+  (setq prj-qs-str
         (cond ((member last-command-char '(backspace 127))
                (substring prj-qs-str 0 (max 0 (1- (length prj-qs-str))))
                )
@@ -763,19 +764,19 @@
 (defun prj-qs-find (s f p)
   (save-excursion
     (let (r beg end start limit)
-      (setq s (concat 
-               "^[[:space:]]*\\([^[:space:]]*[/\\]\\)?\\(" 
-               (regexp-quote s) 
+      (setq s (concat
+               "^[[:space:]]*\\([^[:space:]]*[/\\]\\)?\\("
+               (regexp-quote s)
                "\\)[^/\\[:space:]]*\\([[:space:]]\\|$\\)"
                ))
 
-      (goto-line prj-group-top) 
+      (goto-line prj-group-top)
       (setq beg (point))
       (setq end (point-max))
       (goto-char (max p beg))
 
       (if (>= f 0)
-          (setq fn 're-search-forward 
+          (setq fn 're-search-forward
                 start beg
                 limit end
                 )
@@ -798,7 +799,7 @@
                  )))))))
 
 (defun prj-qs-next (f)
-  (let (k l p a e n s) 
+  (let (k l p a e n s)
     (setq p prj-qs-pos)
     (setq l prj-qs-len)
     (setq s prj-qs-str)
@@ -807,7 +808,7 @@
     (setq k (length s))
     (if (= k 0)
         (setq l k)
-        (progn  
+        (progn
           (if (setq n (prj-qs-find s f (or p (point))))
               (setq p n l k)
               (setq s (substring s 0 l))
@@ -820,7 +821,7 @@
       (prj-set-hilite-bar)
       (when (> l 0)
         (setq prj-qs-face (make-overlay p (+ p l)))
-        (overlay-put prj-qs-face 'face '(:background "white" :box "black")) 
+        (overlay-put prj-qs-face 'face '(:background "white" :box "black"))
 
         (setq prj-qs-pos p)
         (setq prj-qs-len l)

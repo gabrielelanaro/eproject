@@ -18,23 +18,23 @@
 
   Global:
 
-    F5                    : Toggle project setup
-    Ctrl-F5               : Browse project directory in dired
-    Alt-Left              : Previous file
-    Alt-Right             : Next file
+                           F5 : Toggle project setup
+                      Ctrl-F5 : Browse project directory in dired
+                     Alt-Left : Previous file
+                    Alt-Right : Next file
 
   In the project setup:
 
-    Arrow keys            : Navigate
-    Return                : Open project, file, tool
-    <letter>              : Quick search
-    Alt-<letter>          : Activate link
-    Spacebar              : Enter edit mode
-    Escape                : Quit edit mode
+                   Arrow keys : Navigate
+                       Return : Open project, file, tool
+                     <letter> : Quick search
+                 Alt-<letter> : Activate link
+                     Spacebar : Enter edit mode
+                       Escape : Quit edit mode
 
   In dired:
 
-    a                     : Add file(s) to the project
+                            a : Add file(s) to the project
 
 
 
@@ -73,7 +73,7 @@
   to have a different default set, please edit 'prj-default-config' in
   'eproject.el' near the top.
 
-  
+
   Settings:
   ---------
 
@@ -82,8 +82,8 @@
   to whatever you want.
 
 
-  Edit Mode: 
-  ---------- 
+  Edit Mode:
+  ----------
 
   In the project setup, hit the the spacebar to enter edit mode.  You
   can edit pretty much everything except it has little effect to
@@ -99,13 +99,13 @@
 
   To load eproject, add this line to your ~/.emacs:
 
-      (load "/path/to/eproject.el")
+      (load-file "/path/to/eproject.el")
 
   eproject will automatically start up with the last recently used
   project. It will also restore the frame size and position.  You can
   start emacs with a specific project from the command line using:
-        
-      'emacs -project <projectname>'.
+
+      emacs -project <projectname>
 
 
   eproject commands:
@@ -117,8 +117,6 @@
     eproject-remove
     eproject-open
     eproject-close
-    eproject-save
-    eproject-revert
     eproject-help
 
   files:
@@ -136,6 +134,8 @@
     eproject-setup-quit
     eproject-edit
     eproject-edit-quit
+    eproject-save
+    eproject-revert
 
   other:
 
