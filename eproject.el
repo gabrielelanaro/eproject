@@ -235,6 +235,11 @@
   (concat eproject-directory f)
   )
 
+(defun prj-goto-line (n)
+  (goto-char 1)
+  (beginning-of-line n)
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Write configuration to file
 
@@ -683,9 +688,9 @@ do not belong to  project files"
            (line (cadr pos))
            )
       (when (and (numberp top) (numberp line))
-        (goto-line top)
+        (prj-goto-line top)
         (set-window-start w (point))
-        (goto-line line)
+        (prj-goto-line line)
         ))))
 
 (defun prj-select-window (w)

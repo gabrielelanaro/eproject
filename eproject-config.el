@@ -221,7 +221,7 @@
     (with-current-buffer prj-buffer
       (save-excursion
         (let (l r e s)
-          (goto-line prj-group-top)
+          (prj-goto-line prj-group-top)
 
           (if (eq 'u (car prj-active-group))
               (read (concat "(("
@@ -516,7 +516,7 @@
 
       (setq p (p-get (active . :pos)))
       (set-window-start (get-buffer-window prj-buffer) (car p))
-      (goto-line (+ prj-group-top (cadr p)))
+      (prj-goto-line (+ prj-group-top (cadr p)))
       (unless (eobp)
         (forward-char prj-group-left)
         )
@@ -677,7 +677,7 @@
       (setq y (+ (cdr tp) (line-number-at-pos (window-start))))
       (setq x (+ (car tp) 1))
       (if (>= y prj-group-top)
-          (goto-line y)
+          (prj-goto-line y)
         )
       (and (memq (car i) '(mouse-1 mouse-2))
            (setq b (button-at p))
@@ -704,7 +704,7 @@
                    (min (line-number-at-pos)
                         (1- (+ prj-group-top m))
                         )))
-      (goto-line n)
+      (prj-goto-line n)
       (if (< p n)
           (set-window-start nil (point-min))
         )
@@ -770,7 +770,7 @@
                "\\)[^/\\[:space:]]*\\([[:space:]]\\|$\\)"
                ))
 
-      (goto-line prj-group-top)
+      (prj-goto-line prj-group-top)
       (setq beg (point))
       (setq end (point-max))
       (goto-char (max p beg))
