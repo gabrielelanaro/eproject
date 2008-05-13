@@ -954,8 +954,8 @@ do not belong to  project files"
            (message (match-string 1 cmd))
            )
           (t
-           (unless (fboundp 'ecb-activate) 
-             ;;(prj-setup-tool-window)
+           (unless (or (fboundp 'ecb-activate) (fboundp 'ewm-init))
+             (prj-setup-tool-window)
              )
            (compile cmd)
            ))))
@@ -1096,11 +1096,13 @@ do not belong to  project files"
       (eproject-open prj-last-open)
 
       ;; restore frame position
-      '(when prj-frame-pos
-        (modify-frame-parameters prj-initial-frame prj-frame-pos)
-        ;; emacs bug: when it's too busy it doesn't set frames correctly.
-        (sit-for 0.2)
-        )))
+      (unless (fboundp 'ewm-init)
+        (when prj-frame-pos
+          (modify-frame-parameters prj-initial-frame prj-frame-pos)
+          ;; emacs bug: when it's too busy it doesn't set frames correctly.
+          (sit-for 0.2)
+          ))))
+
   (when (fboundp 'ecb-activate) 
     (ecb-activate)
     )
