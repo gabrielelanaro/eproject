@@ -191,7 +191,7 @@
 (defun prj-save-window-pos ()
   (p-set (prj-active-group . :pos)
      (list
-      (window-start (selected-window))
+      (window-start)
       (- (line-number-at-pos) prj-group-top)
       )))
 
@@ -674,8 +674,8 @@
       (select-window (car (cadr i)))
       (setq p (nth 5 (cadr i)))
       (setq tp (nth 6 (cadr i)))
-      (setq y (1+ (cdr tp)))
-      (setq x (1+ (car tp)))
+      (setq y (+ (cdr tp) (line-number-at-pos (window-start))))
+      (setq x (+ (car tp) 1))
       (if (>= y prj-group-top)
           (goto-line y)
         )
