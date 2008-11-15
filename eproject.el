@@ -351,15 +351,15 @@
         (setq path (expand-file-name (car f) prj-directory))
         (cond ((setq b (get-file-buffer path))
                (set-window-buffer w b t)
-               (push (list (car f)
-                           (line-number-at-pos (window-start w))
-                           (line-number-at-pos (window-point w))
-                           ) files)
-               )
+               (with-current-buffer b
+                 (let ((s (line-number-at-pos (window-start w)))
+                       (p (line-number-at-pos (window-point w)))
+                       )
+                   (push (list (car f) s p) files)
+                   )))
               ((consp (cdr f))
                (push f files)
                )))
-
       (set-window-buffer w c t)
       (prj-addhooks)
       (let ((fp (prj-create-file (prj-localfile)))
@@ -964,8 +964,9 @@ do not belong to  project files"
            (unless (or (fboundp 'ecb-activate) (fboundp 'ewm-init))
              (prj-setup-tool-window)
              )
-           (compile cmd)
-           ))))
+           (let ((display-buffer-reuse-frames t))
+             (compile cmd)
+             )))))
 
 (defun prj-run-tool (a)
   (unless (string-match "^--+$" (car a))
@@ -1083,7 +1084,7 @@ do not belong to  project files"
     (file-name-directory (symbol-file 'eproject-startup)))
 
   ;; load UI support
-  (load (eproject-addon "eproject-config"))
+  (load (eproject-addon "eproject-config") nil t)
 
   ;; When no projects are specified yet, load the eproject project itself.
   (unless prj-list
