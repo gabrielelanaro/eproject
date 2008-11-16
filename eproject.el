@@ -343,13 +343,12 @@
 
 (defun prj-saveconfig ()
   (when prj-current
-    (let (w c b path files)
+    (let (w c b files)
       (prj-removehooks)
       (setq w (selected-window))
       (setq c (window-buffer w))
       (dolist (f prj-files)
-        (setq path (expand-file-name (car f) prj-directory))
-        (cond ((setq b (get-file-buffer path))
+        (cond ((setq b (get-buffer (car f)))
                (set-window-buffer w b t)
                (with-current-buffer b
                  (let ((s (line-number-at-pos (window-start w)))
@@ -441,9 +440,10 @@ do not belong to  project files"
   (interactive)
   (let (a b)
     (dolist (f prj-files)
-      (setq b (get-file-buffer (expand-file-name (car f) prj-directory)))
-      (if b (setq a (cons (list b) a)))
-      )
+      (setq b (get-buffer (car f)))
+      (if b
+          (setq a (cons (list b) a))
+          ))
     (dolist (b (buffer-list))
       (when (eq (consp (assoc b a)) from-project)
         (kill-buffer b)
@@ -577,24 +577,17 @@ do not belong to  project files"
   )
 
 (defun prj-wcc-hook ()
-  (let* ((w (selected-window))
-         (b (window-buffer w))
-         )
+  (let ((w (selected-window)) (b (window-buffer (selected-window))))
     ;; (message "wcc-hook: %s" (prin1-to-string (list wcc-count w b n)))
     (prj-register-buffer b)
     ))
 
 (defun prj-find-file-hook ()
   (run-with-idle-timer
-   0 nil
-   `(lambda ()
-      (let* ((b ,(current-buffer))
-             (a (prj-register-buffer b))
-             )
-        (when a
-          (with-current-buffer b
-            (rename-buffer (car a) t)
-            ))))))
+   0
+   nil
+   `(lambda () (prj-register-buffer ,(current-buffer)))
+   ))
 
 (defun prj-kill-buffer-hook ()
   (let ((b (current-buffer)) a)
@@ -616,7 +609,9 @@ do not belong to  project files"
             (message "Added to project: %s" (car a))
             )
           (setcdr a b)
-          ))
+          (with-current-buffer b
+            (rename-buffer (car a) t)
+            )))
       (when (and a (null (eq a prj-curfile)))
         (setq prj-curfile a)
         (prj-setmenu)
@@ -640,7 +635,7 @@ do not belong to  project files"
 (defun prj-remove-file (a &optional on-the-fly)
   (let ((n (prj-otherfile prj-files a)) b)
     (setq prj-files (prj-del-list prj-files a))
-    (when (eq prj-curfile a) 
+    (when (eq prj-curfile a)
       (setq prj-curfile n)
       )
     (unless on-the-fly
@@ -658,11 +653,9 @@ do not belong to  project files"
 
 (defun prj-edit-file (a)
   (when a
-    (let* ((n (car a))
-           (f (expand-file-name n prj-directory))
-           (b (get-file-buffer f))
-           pos
-           )
+    (let ((n (car a)) f b pos)
+      (setq f (expand-file-name n prj-directory))
+      (setq b (get-file-buffer f))
       (unless b
         (prj-removehooks)
         (setq b (find-file-noselect f))
@@ -685,10 +678,7 @@ do not belong to  project files"
 
 (defun prj-restore-edit-pos (pos w)
   (when (consp pos)
-    (let* ((b (current-buffer))
-           (top (car pos))
-           (line (cadr pos))
-           )
+    (let ((b (current-buffer)) (top (car pos)) (line (cadr pos)))
       (when (and (numberp top) (numberp line))
         (prj-goto-line top)
         (set-window-start w (point))
@@ -717,7 +707,7 @@ do not belong to  project files"
   )
 
 (defun prj-switch-file (fn1 fn2)
-  (let* ((a (rassoc (current-buffer) prj-files)))
+  (let ((a (rassoc (current-buffer) prj-files)))
     (cond (a
            (prj-edit-file (funcall fn1 prj-files a))
            )
@@ -1111,7 +1101,7 @@ do not belong to  project files"
           (sit-for 0.2)
           ))))
 
-  (when (fboundp 'ecb-activate) 
+  (when (fboundp 'ecb-activate)
     (ecb-activate)
     )
   )
