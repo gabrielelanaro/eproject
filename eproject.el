@@ -262,7 +262,7 @@
 (defun prj-close-file (fp)
   (with-current-buffer fp
     (condition-case nil
-      (write-region 1 (point-max) (buffer-name fp) nil 0)
+      (write-region nil nil (buffer-name fp) nil 0)
       (error nil)
       ))
   (kill-buffer fp)
@@ -278,11 +278,10 @@
 )
 
 (defun prj-get-frame-pos (f)
-  (and f
-       (mapcar
-        (lambda (parm) (cons parm (frame-parameter f parm)))
-        '(top left width height)
-        )))
+  (mapcar
+   (lambda (parm) (cons parm (frame-parameter f parm)))
+   '(top left width height)
+   ))
 
 (defun prj-savelist ()
   (let ((g (prj-globalfile))
