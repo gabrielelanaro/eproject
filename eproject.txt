@@ -162,4 +162,4 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
   General Public License for more details.
 
-  Jan 17, 2008 -- grischka
+  Dez 01, 2008 -- grischka
