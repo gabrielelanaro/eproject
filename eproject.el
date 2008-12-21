@@ -1094,7 +1094,7 @@ do not belong to  project files"
 
       ;; restore frame position
       (unless (fboundp 'ewm-init)
-        (when prj-frame-pos
+        (when (and prj-frame-pos prj-initial-frame)
           (modify-frame-parameters prj-initial-frame prj-frame-pos)
           ;; emacs bug: when it's too busy it doesn't set frames correctly.
           (sit-for 0.2)
@@ -1118,7 +1118,7 @@ do not belong to  project files"
     (progn
       (prj-loadlist)
       (when prj-last-open (setq inhibit-startup-screen t))
-      (setq prj-initial-frame (selected-frame))
+      (when (display-graphic-p) (setq prj-initial-frame (selected-frame)))
       (push '("project" . prj-command-line-switch) command-switch-alist)
       (run-with-idle-timer 0.1 nil 'prj-startup-delayed)
       )))
