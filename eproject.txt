@@ -51,9 +51,9 @@
   Files:
   ------
 
-  Files are added to the project simply when they are first
-  visited. Similar they are removed then they get killed.  New files
-  are inserted after the one that was last viewed.
+  Files are added to the project simply when they are first visited.
+  Similar they are removed then they get killed.  New files are
+  inserted after the one that was last viewed.
 
 
   Tools:
@@ -67,7 +67,7 @@
 
     -e <emacs-command> 	  run lisp command or sexp
     -in <directory> ...	  run command in specified directory.
-     (Relative paths refer to the project directory)
+    (Relative paths refer to the project directory)
 
   A new project is initialized with default tool commands. If you wish
   to have a different default set, please edit 'prj-default-config' in

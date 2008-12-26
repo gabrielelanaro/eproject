@@ -765,7 +765,8 @@ do not belong to  project files"
   (let ((f (consp prj-current)) m1 m2 m3)
 
     (setq m1
-          `(("Project" project
+          `(("Open" open ,@(prj-menulist-maker prj-list prj-current 'prj-menu-open))
+            ("Add/Remove" other
              ("Add ..." "Add new or existing project to the list" . eproject-add)
              ("Remove ..." "Remove project from the list" . eproject-remove)
              ,@(and f '(("Close" "Close current project" . eproject-close)))
@@ -773,7 +774,6 @@ do not belong to  project files"
              ("Setup" "Enter the project setup area." . eproject-setup-toggle)
              ("Help" "View eproject.txt" . eproject-help)
              )
-            ("Open" open ,@(prj-menulist-maker prj-list prj-current 'prj-menu-open))
             ))
     (when f
       (nconc m1 (cons '("--") (prj-menulist-maker prj-tools nil prj-tools-fns)))
