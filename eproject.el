@@ -2,7 +2,7 @@
 ;;
 ;; eproject.el --- project workspaces for emacs
 ;;
-;; Copyright (C) 2008 grischka
+;; Copyright (C) 2008,2009 grischka
 ;;
 ;; Author: grischka -- grischka@users.sourceforge.net
 ;; Created: 24 Jan 2008
