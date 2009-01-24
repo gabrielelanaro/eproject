@@ -275,7 +275,7 @@
   (prj-init)
   (load (prj-globalfile) t t)
   (setq prj-version eproject-version)
-)
+  )
 
 (defun prj-get-frame-pos (f)
   (mapcar
@@ -1064,6 +1064,11 @@ do not belong to  project files"
     (setcdr a v)
     ))
 
+(defun prj-on-kill ()
+  (save-some-buffers t)
+  (prj-saveall)
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialize
 
@@ -1083,7 +1088,7 @@ do not belong to  project files"
   ;; no project so far
   (prj-reset)
   (prj-setup-all)
-  (add-hook 'kill-emacs-hook 'prj-saveall)
+  (add-hook 'kill-emacs-hook 'prj-on-kill)
 
   ;; inhibit open last project when a file was on the commandline
   (unless (buffer-file-name (window-buffer))
