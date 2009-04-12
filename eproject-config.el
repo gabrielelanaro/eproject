@@ -739,14 +739,14 @@
 (defun prj-qsearch ()
   (interactive)
   (setq prj-qs-str
-        (cond ((member last-command-char '(backspace 127))
+        (cond ((member last-command-event '(backspace 127))
                (substring prj-qs-str 0 (max 0 (1- (length prj-qs-str))))
                )
-              ((eq last-command-char 'delete)
+              ((eq last-command-event 'delete)
                ""
                )
               (t
-               (concat prj-qs-str (char-to-string last-command-char))
+               (concat prj-qs-str (char-to-string last-command-event))
                )))
   (prj-qs-next 0)
   )
