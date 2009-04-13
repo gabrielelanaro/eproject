@@ -6,7 +6,7 @@
 ;;
 ;; Author: grischka -- grischka@users.sourceforge.net
 ;; Created: 24 Jan 2008
-;; Version: 0.2
+;; Version: 0.3
 ;;
 ;; This program is free software, released under the GNU General
 ;; Public License (GPL, version 2). For details see:
@@ -148,7 +148,7 @@
 (defvar eproject-directory)
 
 ;; eproject version that created the files
-(defvar eproject-version "0.2")
+(defvar eproject-version "0.3")
 
 ;; Configuration UI
 (eval-and-compile
