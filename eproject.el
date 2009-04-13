@@ -22,8 +22,13 @@
 
 ;; There is a global file
 (defun prj-globalfile ()
-  (expand-file-name (concat user-emacs-directory "eproject.lst"))
-  )
+  (unless (boundp 'user-emacs-directory)
+     (setq user-emacs-directory "~/.emacs.d/")
+     )
+  (let ((d (expand-file-name user-emacs-directory)))
+    (make-directory d t)
+    (concat d "eproject.lst")
+    ))
 
 ;; with the list of all projects
 (defvar prj-list)
