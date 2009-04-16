@@ -163,6 +163,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Small functions
 
+(defun caddr (l) (car (cddr l)))
+
 (defun prj-del-list (l e)
   (let ((a (assoc (car e) l)))
     (if a
@@ -174,32 +176,19 @@
   )
 
 (defun prj-next-file (l e)
-  (let ((a (assoc (car e) l)))
-    (when a
-      (setq l (memq a l))
-      (if (cdr l) (cadr l) a)
-      )))
+  (and (setq e (assoc (car e) l))
+       (cadr (memq e l))
+       ))
 
 (defun prj-prev-file (l e)
-  (let ((a (assoc (car e) l)) (p l))
-    (when a
-      (while (and l (null (eq (car l) a)))
-        (setq p l l (cdr l))
-        )
-      (car p)
-      )))
-
-;; replace a closed file, either by the previous or the next.
+  (prj-next-file (reverse l) e)
+  )
+	  
+ ; replace a closed file, either by the previous or the next.
 (defun prj-otherfile (l f)
-  (let ((n (prj-prev-file l f)))
-    (when (equal f n)
-      (setq n (prj-next-file l f))
-      (when (equal f n)
-        (setq n nil)
-        ))
-    n))
-
-(defun caddr (l) (car (cddr l)))
+  (or (prj-prev-file l f) 
+      (prj-next-file l f)
+      ))
 
 ;; make relative path, but only up to the second level of ..
 (defun prj-relative-path (f)
@@ -713,7 +702,7 @@ do not belong to  project files"
 (defun prj-switch-file (fn1 fn2)
   (let ((a (rassoc (current-buffer) prj-files)))
     (cond (a
-           (prj-edit-file (funcall fn1 prj-files a))
+           (prj-edit-file (or (funcall fn1 prj-files a) a))
            )
           (prj-curfile
            (prj-edit-file prj-curfile)
