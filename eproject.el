@@ -402,6 +402,7 @@
     )
   (prj-addhooks)
   (prj-setup-all)
+  (prj-isearch-setup)
   (cd prj-directory)
   (unless (prj-edit-file prj-curfile)
     (eproject-dired)
@@ -425,6 +426,7 @@
     (prj-reset)
     (prj-config-reset)
     (prj-setup-all)
+    (prj-isearch-setup)
     ))
 
 (defun eproject-killbuffers (&optional from-project)
@@ -1068,6 +1070,42 @@ do not belong to  project files"
   (save-some-buffers t)
   (prj-saveall)
 )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; isearch in all project files
+
+(defun prj-isearch-function (b wrap)
+  (let (a d)
+    (or b (setq b (current-buffer)))
+    (cond (wrap
+	   (if isearch-forward 
+	       (setq a (car prj-files))
+	       (setq a (car (last prj-files)))
+	       ))
+	  ((setq a (rassoc b prj-files))
+	   (if isearch-forward
+	       (setq a (prj-next-file prj-files a))
+	       (setq a (prj-prev-file prj-files a))
+	       )
+	    ))
+    (when a
+      (if (buffer-live-p (cdr a)) 
+	  (setq d (cdr a))
+	  (setq d (car (prj-find-file a)))
+	  ))
+    ;; (print `(prj-isearch (wrap . ,wrap) ,b ,d) (get-buffer "*Messages*"))
+    d
+    ))
+
+(defun prj-isearch-setup ()
+  (cond (prj-current
+	 (setq multi-isearch-next-buffer-function 'prj-isearch-function)
+	 (setq multi-isearch-pause 'initial)
+	 (add-hook 'isearch-mode-hook 'multi-isearch-setup)
+	 )
+	(t
+	 (remove-hook 'isearch-mode-hook 'multi-isearch-setup)
+	 )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialize
