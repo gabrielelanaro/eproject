@@ -644,7 +644,7 @@ do not belong to  project files"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Edit another file
 
-(defun prj-edit-file (a)
+(defun prj-find-file (a)
   (when a
     (let ((n (car a)) f b pos)
       (setq f (expand-file-name n prj-directory))
@@ -656,22 +656,28 @@ do not belong to  project files"
         (when b
           (with-current-buffer b
             (rename-buffer n t)
-            )
+      	    )
           (setq pos (cdr a))
-          ))
+          )) 
       (when b
         (setcdr a b)
-        (eproject-setup-quit)
-        (switch-to-buffer b)
-        (prj-restore-edit-pos pos (selected-window))
-        (prj-setmenu)
-        )))
-  (setq prj-curfile a)
-  )
+        (cons b pos)
+        ))))
+
+(defun prj-edit-file (a)
+  (let ((f (prj-find-file a)))
+    (when f
+      (eproject-setup-quit)
+      (switch-to-buffer (car f))
+      (prj-restore-edit-pos (cdr f) (selected-window))
+      (prj-setmenu)
+      )
+    (setq prj-curfile a)
+    ))
 
 (defun prj-restore-edit-pos (pos w)
   (when (consp pos)
-    (let ((b (current-buffer)) (top (car pos)) (line (cadr pos)))
+    (let ((top (car pos)) (line (cadr pos)))
       (when (and (numberp top) (numberp line))
         (prj-goto-line top)
         (set-window-start w (point))
