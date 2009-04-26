@@ -592,9 +592,9 @@ do not belong to  project files"
           ))))
 
 (defun prj-register-buffer (b)
-  (let (f a i)
+  (let (f a)
     (setq f (buffer-file-name b))
-    (when f
+    (when (and f (not (string-match "^\\." (file-name-nondirectory f))))
       (setq a (rassq b prj-files))
       (unless a
         (setq a (prj-insert-file f nil t))
