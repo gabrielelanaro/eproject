@@ -216,58 +216,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Read back the configuration after edits
 
-(defun prj-scan-group ()
+(defun prj-config-parse ()
   (when (and (prj-config-active) prj-edit-mode)
     (with-current-buffer prj-buffer
       (save-excursion
-        (let (l r e s)
+        (let ((s (p-get (prj-active-group . :scan))) l r e)
           (prj-goto-line prj-group-top)
-
           (if (eq 'u (car prj-active-group))
-              (read (concat "(("
-                            (buffer-substring-no-properties (point) (point-max))
-                            "))"))
-
-            (while (< (point) (point-max))
-              (setq e (line-end-position))
-              (setq r
-
-  (cond ((re-search-forward
-          "^ *\\[[-+]\\] +\\([^ ]\\(.+[^ ]\\)?\\) *$"
-          e t)
-         (list ">" (match-string-no-properties 1))
-         )
-        ((re-search-forward
-          "^ *==+ *$"
-          e t)
-         (list "<")
-         )
-        ((re-search-forward
-          "^ *\\([^ ()]\\([^()]*[^ ()]\\)?\\) *\\((.+)\\)? *:\\( +\\(.*[^ ]\\)\\)? *$"
-          e t)
-         (setq s (match-string-no-properties 3))
-         (cons (match-string-no-properties 1)
-               (cons (or (match-string-no-properties 5) "")
-                     (and s (list (substring s 1 -1)))
-                     )))
-        ((re-search-forward
-          "^ *\\([^ ]\\(.*[^ ]\\)?\\) *$"
-          e t)
-         (list (match-string-no-properties 1))
-         )))
-
-              (when r
-                (setq l (cons r l))
-                )
-              (forward-line 1)
-              )
-            (list (nreverse l))
-            ))))))
-
-(defun prj-config-parse ()
-    (let ((s (prj-scan-group)))
-      (if s (p-call (prj-active-group . :parse) (car s)))
-      ))
+              (setq l (read (concat
+                             "(("
+                             (buffer-substring-no-properties (point) (point-max))
+                             "))")))
+              (progn
+                (while (< (point) (point-max))
+                  (setq e (line-end-position))
+                  (setq r
+                    (if (and s (posix-search-forward (car s) e t))
+                        (apply (cdr s) nil)
+                        (and (re-search-forward "^ *\\(.*[^ :]\\)[ :]*$" e t)
+                             (list (match-string-no-properties 1))
+                             )))
+                  (if r (setq l (cons r l)))
+                  (forward-line 1)
+                  )
+                (setq l (nreverse l))
+                ))
+          (p-call (prj-active-group . :parse) l)
+          )))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The project config window
@@ -285,18 +260,28 @@
       :print ,(lambda (a p)
                (prj-link (car a) nil a)
                (prj-link-2 nil p (cadr a))
+               (and (caddr a) (prj-link-2 nil p (caddr a)))
                )
+      :scan ("^ *\\([^ :]+\\) *: *\\([^ ]+\\) *\\( +: *\\([^ ]+\\)\\)? *$" .
+              ,(lambda ()
+               (let ((a (match-string-no-properties 1))
+                     (b (match-string-no-properties 2))
+                     (c (match-string-no-properties 4))
+                     )
+                (cons a (cons b (and c (list c))))
+                )))
       :parse ,(lambda (s)
                (dolist (a s)
                  (unless (cadr a)
-                   (error "Error: Project directory empty.")
-                   ))
+                   (error "Error: Project directory empty: %s" (car a))
+                   )
+                 (when prj-current
+                   (when (string-equal (cadr a) (cadr prj-current))
+                     (setq prj-current a)
+                     (prj-setconfig "project-name" (car a))
+                     )))
                (setq prj-list s)
-               (let ((a (rassoc (cdr prj-current) s)))
-                 (when a
-                   (setq prj-current a)
-                   (prj-setconfig "project-name" (car a))
-                   )))
+               )
       :menu (add remove open close)
       )
 
@@ -309,6 +294,7 @@
       :print ,(lambda (a p)
                (prj-link (car a) nil a)
                )
+      :scan nil
       :parse ,(lambda (s)
                 (let (b)
                   (dolist (l s)
@@ -334,13 +320,20 @@
                (prj-link (car a) nil a)
                (when (caddr a)
                  (unless prj-edit-mode
-                   (insert-char 32 (- (- prj-group-tab 10) (- (point) p)))
+                   (insert-char 32 (- (- prj-group-tab 12) (- (point) p)))
                    )
                  (insert " (" (caddr a) ")")
                  )
-               (when (cadr a)
-                 (prj-link-2 nil p (cadr a))
-                 ))
+               (prj-link-2 nil p (cadr a))
+               )
+      :scan ("^ *\\([^(:]*[^(: ]\\) *\\(([^ ):]+)\\)?\\( *: *\\(.*[^ ]\\)?\\)? *$" .
+              ,(lambda ()
+                 (let ((a (match-string-no-properties 1))
+                       (b (match-string-no-properties 2))
+                       (c (match-string-no-properties 4))
+                       )
+                   (list a c (and b (substring b 1 -1)))
+                   )))
       :parse ,(lambda (s)
                (setq prj-tools s)
                )
@@ -354,8 +347,13 @@
       :list prj-config
       :exec eproject-edit
       :print ,(lambda (a p)
-               (prj-link-2 (car a) p (or (cdr a) ""))
+               (prj-link-2 (car a) p (cdr a))
                )
+      :scan ("^ *\\([^ :]+\\) *: *\\(.*[^ ]\\)? *$" .
+              ,(lambda ()
+                 (list (match-string-no-properties 1)
+                       (match-string-no-properties 2)
+                       )))
       :parse ,(lambda (s)
                (dolist (l s) (setcdr l (cadr l)))
                (let ((prj-config s) n)
@@ -454,7 +452,7 @@
       (erase-buffer)
 
       (setq prj-group-left (if prj-edit-mode 0 1))
-      (setq prj-group-tab (+ 24 prj-group-left))
+      (setq prj-group-tab (+ 26 prj-group-left))
       (setq active
             (or prj-active-group
                 (setq prj-active-group (car prj-groups))
@@ -567,7 +565,7 @@
 (defun prj-link-2 (a p b)
   (if a (insert a))
   (insert-char 32 (- prj-group-tab 1 (- (point) p)))
-  (insert " : " b)
+  (if b (insert " : " b) (insert " :"))
   )
 
 (defun prj-link-3 (id f)
@@ -712,10 +710,11 @@
         (setq a (point))
         (forward-char prj-group-left)
         (setq e (line-end-position))
-        (and (< (setq c (+ a prj-group-tab)) e)
-             (= (char-after c) ?:)
-             (setq e c)
-             )
+        (when (< (setq c (+ a prj-group-tab)) e)
+          (save-excursion
+            (if (re-search-forward " *:" e t)
+                (setq e (1- (match-end 0)))
+              )))
         (while (= (char-after) 32)
           (forward-char 1)
           )

@@ -20,13 +20,12 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; There is a global file
+;; There is a global file (~/.emacs.d/eproject.lst)
 (defun prj-globalfile ()
-  (unless (boundp 'user-emacs-directory)
-    (setq user-emacs-directory "~/.emacs.d/")
-    )
-  (concat (expand-file-name user-emacs-directory) "eproject.lst")
-  )
+  (expand-file-name "eproject.lst"
+     (if (boundp 'user-emacs-directory) user-emacs-directory
+       "~/.emacs.d/")
+     ))
 
 ;; with the list of all projects
 (defvar prj-list)
@@ -46,15 +45,15 @@
   (setq prj-list nil)
   (setq prj-last-open nil)
   (setq prj-frame-pos nil)
-)
+  )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Each project has a directory
+
 (defvar prj-directory)
 
 ;; with a configuration files in it
-(defun prj-localfile ()
-  (expand-file-name "eproject.cfg" prj-directory)
-  )
+(defvar prj-default-cfg "eproject.cfg")
 
 ;; This file defines:
 
@@ -74,7 +73,7 @@
 (defvar prj-functions nil)
 
 ;; directory to run commands, default to prj-directory
-(defvar prj-directory-run)
+(defvar prj-exec-directory)
 
 ;; Here are some default tools for new projects,
 ;; (which you might want to adjust to your needs)
@@ -93,14 +92,13 @@
      )))
   )
 
-;; This defines the current project
+;; The current project
 (defvar prj-current)
 
-;; There is an internal list with generated functions
-;; for each tool
+;; A list with generated functions for each tool
 (defvar prj-tools-fns)
 
-;; and a list with files removed from the project
+;; A list with files removed from the project
 (defvar prj-removed-files)
 
 ;; Here is a function to reset/close the project
@@ -108,7 +106,7 @@
   (setq prj-version nil)
   (setq prj-current nil)
   (setq prj-directory nil)
-  (setq prj-directory-run nil)
+  (setq prj-exec-directory nil)
   (setq prj-files nil)
   (setq prj-removed-files nil)
   (setq prj-curfile nil)
@@ -134,7 +132,7 @@
   (dolist (l s) (eval l))
   )
 
-;; Some more variables
+;; Some more variables:
 
 ;; the frame that exists on startup
 (defvar prj-initial-frame nil)
@@ -181,7 +179,7 @@
 (defun prj-prev-file (l e)
   (prj-next-file (reverse l) e)
   )
-	  
+          
  ; replace a closed file, either by the previous or the next.
 (defun prj-otherfile (l f)
   (or (prj-prev-file l f) 
@@ -254,7 +252,7 @@
 (defun prj-close-file (fp)
   (with-current-buffer fp
     (condition-case nil
-      (write-region nil nil (buffer-name fp) nil 0)
+      (and t (write-region nil nil (buffer-name fp) nil 0))
       (error nil)
       ))
   (kill-buffer fp)
@@ -297,29 +295,32 @@
 ;; Load/Save local per-project configuration file
 
 (defun prj-update-config ()
-  (setq prj-directory-run
-        (file-name-as-directory
-         (expand-file-name
-          (or (prj-getconfig "run-directory") ".")
-          prj-directory
-          )))
+  (let ((d (prj-get-directory prj-current))
+        (e (prj-getconfig "exec-root"))
+        )
+    (if e (setq d (expand-file-name e d)))
+    (setq prj-exec-directory (file-name-as-directory d))
+    ))
+
+(defun prj-get-directory (a)
+  (file-name-as-directory (expand-file-name (cadr a)))
+  )
+
+(defun prj-get-cfg ()
+  (expand-file-name (or (caddr prj-current) prj-default-cfg) prj-directory)
   )
 
 (defun prj-loadconfig (a)
   (let (lf e)
     (prj-reset)
     (setq prj-current a)
-    (setq prj-directory
-          (file-name-as-directory
-           (expand-file-name (cadr a))
-           ))
-
-    (when (file-exists-p (setq lf (prj-localfile)))
+    (setq prj-directory (prj-get-directory a))
+    (when (file-regular-p (setq lf (prj-get-cfg)))
       (load lf nil t)
       (setq prj-curfile
-        (or (assoc prj-curfile prj-files)
-	    (car prj-files)
-	    ))
+            (or (assoc prj-curfile prj-files)
+                (car prj-files)
+                ))
       )
     (if (setq e (prj-getconfig "project-name"))
         (setcar a e)
@@ -350,7 +351,7 @@
                )))
       (set-window-buffer w c t)
       (prj-addhooks)
-      (let ((fp (prj-create-file (prj-localfile)))
+      (let ((fp (prj-create-file (prj-get-cfg)))
             (prj-curfile (car prj-curfile))
             (prj-files (nreverse files))
             )
@@ -389,8 +390,8 @@
       ))
   (setq a (or (car (member a prj-list)) a))
   (unless (eq a prj-current)
-    (unless (file-directory-p (cadr a))
-      (error "Error: No such directory: %s" (cadr a))
+    (unless (file-directory-p (prj-get-directory a))
+      (error "No such directory: %s" (cadr a))
       )
     (setq prj-list (cons a (delq a prj-list)))
     (eproject-close)
@@ -440,24 +441,26 @@ do not belong to  project files"
         (kill-buffer b)
         ))))
 
-(defun eproject-add (d)
+(defun eproject-add (dir &optional name cfg)
   "Add a new or existing project to the list."
   (interactive
-   (list
-    (read-directory-name "Add project in directory: " prj-directory nil t)
+   (let (d n f)
+    (setq d (read-directory-name "Add project in directory: " prj-directory nil t))
+    (setq n (file-name-nondirectory (directory-file-name d)))
+    (setq n (read-string "Project name: " n))
+    (setq f (read-string "Project file: " prj-default-cfg))
+    (list d n f)
     ))
-  (when d
-    (setq d (directory-file-name d))
-    )
-  (when (= 0 (length d))
-    (error "Error: Empty directory name.")
-    )
-  (let (n a)
-    (setq n (file-name-nondirectory d))
-    (setq a (list n d))
-    (push a prj-list)
-    (prj-setup-all)
-    ))
+  (when dir
+    (setq dir (directory-file-name dir))
+    (setq name (file-name-nondirectory dir))
+    (when (and cfg (string-equal cfg prj-default-cfg))
+      (setq cfg nil)
+      )
+    (let ((a (if cfg (list name dir cfg) (list name dir))))
+      (push a prj-list)
+      (eproject-open a)
+      )))
 
 (defun eproject-remove (a)
   "Remove a project from the list."
@@ -569,7 +572,7 @@ do not belong to  project files"
 
 (defun prj-wcc-hook ()
   (let ((w (selected-window)) (b (window-buffer (selected-window))))
-    ;; (message "wcc-hook: %s" (prin1-to-string (list wcc-count w b n)))
+    ;;(message "wcc-hook: %s" (prin1-to-string (list w b)))
     (prj-register-buffer b)
     ))
 
@@ -932,8 +935,8 @@ do not belong to  project files"
       (setq dir (match-string-no-properties 1 cmd))
       (setq cmd (substring cmd (match-end 0)))
       )
-    (when prj-directory-run
-      (setq dir (expand-file-name (or dir ".") prj-directory-run))
+    (when prj-exec-directory
+      (setq dir (expand-file-name (or dir ".") prj-exec-directory))
       )
     (if dir (cd dir))
     (cond ((string-match "^-e +" cmd)
@@ -951,8 +954,9 @@ do not belong to  project files"
            (unless (or (fboundp 'ecb-activate) (fboundp 'ewm-init))
              (prj-setup-tool-window)
              )
-           (let ((display-buffer-reuse-frames t))
+           (let ((display-buffer-reuse-frames t) (f (selected-frame)))
              (compile cmd)
+             (select-frame-set-input-focus f)
              )))))
 
 (defun prj-run-tool (a)
@@ -1027,16 +1031,16 @@ do not belong to  project files"
 (defun eproject-dired ()
   "Start a dired window with the project directory."
   (interactive)
-  (when prj-directory-run
+  (when prj-directory
     (eproject-setup-quit)
     ;;(message "Use 'a' to add marked or single files to the project.")
-    (dired prj-directory-run)
+    (dired prj-directory)
     (let ((map dired-mode-map))
       (define-key map [mouse-2] 'dired-find-file)
       (define-key map "a" 'prj-dired-addfiles)
       (define-key map "r" 'prj-dired-run)
       (define-key map [menu-bar operate command] '("Add to Project"
-	"Add current or marked file(s) to project" . prj-dired-addfiles))
+        "Add current or marked file(s) to project" . prj-dired-addfiles))
       )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1116,7 +1120,7 @@ do not belong to  project files"
 
   ;; When no projects are specified yet, load the eproject project itself.
   (unless prj-list
-    (load (eproject-addon "eproject.cfg"))
+    (load (eproject-addon prj-default-cfg))
     )
 
   ;; no project so far

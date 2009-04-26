@@ -79,9 +79,8 @@
   Settings:
   ---------
 
-  Currently there is only 'project-name'.  If you add a new project,
-  the name is initialized to the directory name, but you can change it
-  to whatever you want.
+  Currently there is only:
+    project-name - name of the project
 
 
   Edit Mode:
