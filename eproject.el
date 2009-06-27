@@ -657,7 +657,7 @@ do not belong to  project files"
         (when b
           (with-current-buffer b
             (rename-buffer n t)
-      	    )
+            )
           (setq pos (cdr a))
           )) 
       (when b
@@ -723,13 +723,13 @@ do not belong to  project files"
 
 (defun prj-setkeys ()
   (let ((f (consp prj-current))
-	(a (assoc 'eproject-mode minor-mode-map-alist))
-	(map (make-sparse-keymap))
-   	)
+        (a (assoc 'eproject-mode minor-mode-map-alist))
+        (map (make-sparse-keymap))
+        )
     (if a
-	(setcdr a map)
+        (setcdr a map)
         (push (cons 'eproject-mode map) minor-mode-map-alist)
-	)
+        )
     (when f
       (define-key map [M-right] 'eproject-nextfile)
       (define-key map [M-left] 'eproject-prevfile)
@@ -813,27 +813,27 @@ do not belong to  project files"
     (setq v (append v e))
     (dolist (k (reverse l))
       (let (s a)
-	(when (symbolp (car k))
-	  (setq a (pop k))
-	  )
-	(cond
-	 ((numberp (car k))
-	  (setcar e (pop k))
-	  )
-	 ((and (consp (cdr k)) (symbolp (cadr k)))
-	  (setcar e (cadr k))
-	  (setq s (cddr k))
-	  (setq k (and s (cons (car k) (make-sparse-keymap (car k)))))
-	  )
-	 (t
-	  (setcar e (intern (downcase (car k))))
-	  ))
-	(if a
-	    (define-key-after map (vconcat v) k a)
-	    (define-key map (vconcat v) k)
-	    )
-	(if s (prj-menu-maker map s v))
-	))))
+        (when (symbolp (car k))
+          (setq a (pop k))
+          )
+        (cond
+         ((numberp (car k))
+          (setcar e (pop k))
+          )
+         ((and (consp (cdr k)) (symbolp (cadr k)))
+          (setcar e (cadr k))
+          (setq s (cddr k))
+          (setq k (and s (cons (car k) (make-sparse-keymap (car k)))))
+          )
+         (t
+          (setcar e (intern (downcase (car k))))
+          ))
+        (if a
+            (define-key-after map (vconcat v) k a)
+            (define-key map (vconcat v) k)
+            )
+        (if s (prj-menu-maker map s v))
+        ))))
 
 (defun prj-copy-head (l n)
   (let (r)
@@ -865,13 +865,13 @@ do not belong to  project files"
       (setq k (prj-menulist-maker-1 (list (append (pop s) '(("--"))) fns n) act))
       (setq r (nreverse k))
       (dolist (l s)
-	(when (consp fns)
+        (when (consp fns)
           (setq fns (nthcdr w fns))
           )
         (setq n (+ n w))
         (setq k (prj-menulist-maker-1 (list l fns n) act))
-      	(push (cons (concat (prj-shortname (caar l)) " ...")
-		    (cons (intern (format "m_%d" (setq m (1+ m))))
+        (push (cons (concat (prj-shortname (caar l)) " ...")
+                    (cons (intern (format "m_%d" (setq m (1+ m))))
                           k)) r)
         )
       (nreverse r)
@@ -1078,34 +1078,34 @@ do not belong to  project files"
   (let (a d)
     (or b (setq b (current-buffer)))
     (cond (wrap
-	   (if isearch-forward 
-	       (setq a (car prj-files))
-	       (setq a (car (last prj-files)))
-	       ))
-	  ((setq a (rassoc b prj-files))
-	   (if isearch-forward
-	       (setq a (prj-next-file prj-files a))
-	       (setq a (prj-prev-file prj-files a))
-	       )
-	    ))
+           (if isearch-forward 
+               (setq a (car prj-files))
+               (setq a (car (last prj-files)))
+               ))
+          ((setq a (rassoc b prj-files))
+           (if isearch-forward
+               (setq a (prj-next-file prj-files a))
+               (setq a (prj-prev-file prj-files a))
+               )
+            ))
     (when a
       (if (buffer-live-p (cdr a)) 
-	  (setq d (cdr a))
-	  (setq d (car (prj-find-file a)))
-	  ))
+          (setq d (cdr a))
+          (setq d (car (prj-find-file a)))
+          ))
     ;; (print `(prj-isearch (wrap . ,wrap) ,b ,d) (get-buffer "*Messages*"))
     d
     ))
 
 (defun prj-isearch-setup ()
   (cond (prj-current
-	 (setq multi-isearch-next-buffer-function 'prj-isearch-function)
-	 (setq multi-isearch-pause 'initial)
-	 (add-hook 'isearch-mode-hook 'multi-isearch-setup)
-	 )
-	(t
-	 (remove-hook 'isearch-mode-hook 'multi-isearch-setup)
-	 )))
+         (setq multi-isearch-next-buffer-function 'prj-isearch-function)
+         (setq multi-isearch-pause 'initial)
+         (add-hook 'isearch-mode-hook 'multi-isearch-setup)
+         )
+        (t
+         (remove-hook 'isearch-mode-hook 'multi-isearch-setup)
+         )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Initialize

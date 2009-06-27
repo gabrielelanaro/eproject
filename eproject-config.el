@@ -583,10 +583,10 @@
     (cond ((memq a prj-links)
            (command-execute (nth 3 a))
            )
-	  ((memq a prj-groups)
+          ((memq a prj-groups)
            (setq prj-active-group a)
-	   (prj-config-print)
-	   )
+           (prj-config-print)
+           )
           (t
            (p-call (prj-active-group . :exec) a)
            ))))
