@@ -1111,10 +1111,6 @@ do not belong to  project files"
 ;; Initialize
 
 (defun prj-startup-delayed ()
-  ;; where is this file
-  (setq eproject-directory
-    (file-name-directory (symbol-file 'eproject-startup)))
-
   ;; load UI support
   (load (eproject-addon "eproject-config") nil t)
 
@@ -1154,6 +1150,9 @@ do not belong to  project files"
   )
 
 (defun eproject-startup ()
+  ;; where is this file
+  (if load-file-name
+      (setq eproject-directory (file-name-directory load-file-name)))
   (if (boundp 'prj-list)
     (progn
       (load (eproject-addon "eproject-config"))
