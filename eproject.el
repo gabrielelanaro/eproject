@@ -179,10 +179,10 @@
 (defun prj-prev-file (l e)
   (prj-next-file (reverse l) e)
   )
-          
+
  ; replace a closed file, either by the previous or the next.
 (defun prj-otherfile (l f)
-  (or (prj-prev-file l f) 
+  (or (prj-prev-file l f)
       (prj-next-file l f)
       ))
 
@@ -659,7 +659,7 @@ do not belong to  project files"
             (rename-buffer n t)
             )
           (setq pos (cdr a))
-          )) 
+          ))
       (when b
         (setcdr a b)
         (cons b pos)
@@ -1078,7 +1078,7 @@ do not belong to  project files"
   (let (a d)
     (or b (setq b (current-buffer)))
     (cond (wrap
-           (if isearch-forward 
+           (if isearch-forward
                (setq a (car prj-files))
                (setq a (car (last prj-files)))
                ))
@@ -1089,7 +1089,7 @@ do not belong to  project files"
                )
             ))
     (when a
-      (if (buffer-live-p (cdr a)) 
+      (if (buffer-live-p (cdr a))
           (setq d (cdr a))
           (setq d (car (prj-find-file a)))
           ))
