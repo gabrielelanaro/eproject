@@ -1067,7 +1067,6 @@ do not belong to  project files"
     ))
 
 (defun prj-on-kill ()
-  (save-some-buffers t)
   (prj-saveall)
 )
 
