@@ -346,7 +346,7 @@
                        )
                    (push (list (car f) s p) files)
                    )))
-              ((consp (cdr f))
+              (t ;;(consp (cdr f))
                (push f files)
                )))
       (set-window-buffer w c t)
