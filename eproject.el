@@ -978,12 +978,11 @@ do not belong to  project files"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; run grep on project files
 
-(require 'grep)
-
 (defun eproject-grep (command-args)
   "Run the grep command on all the project files."
   (interactive
    (progn
+     (require 'grep)
      (grep-compute-defaults)
      (let ((default (grep-default-command)))
        (list (read-from-minibuffer
