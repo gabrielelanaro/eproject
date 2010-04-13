@@ -577,11 +577,8 @@ do not belong to  project files"
     ))
 
 (defun prj-find-file-hook ()
-  (run-with-idle-timer
-   0
-   nil
-   `(lambda () (prj-register-buffer ,(current-buffer)))
-   ))
+  (run-with-idle-timer 0.2 nil 'prj-wcc-hook)
+  )
 
 (defun prj-kill-buffer-hook ()
   (let ((b (current-buffer)) a)
