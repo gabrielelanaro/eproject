@@ -6,7 +6,7 @@
 ;;
 ;; Author: grischka -- grischka@users.sourceforge.net
 ;; Created: 24 Jan 2008
-;; Version: 0.3
+;; Version: 0.4
 ;;
 ;; This program is free software, released under the GNU General
 ;; Public License (GPL, version 2). For details see:
@@ -20,6 +20,32 @@
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; User-configurable items:
+
+;; The  default tools for new projects,
+(defun prj-default-config ()
+  (setq prj-tools (copy-tree '(
+     ("Make"         "make" "f9")
+     ("Clean"        "make clean" "C-f9")
+     ("Run"          "echo run what" "f8")
+     ("Stop"         "-e eproject-killtool" "C-f8")
+     ("---")
+     ("Configure"    "./configure")
+     ("---")
+     ("Explore Project" "nautilus --browser `pwd` &")
+     ("XTerm In Project" "xterm &")
+     )))
+  )
+
+
+;; Should the project directory be set as default-directory
+;; for all project files (nil/t):
+(defvar prj-set-default-directory nil)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; no user-configurable items below (probably)
+
 ;; There is a global file (~/.emacs.d/eproject.lst)
 (defun prj-globalfile ()
   (expand-file-name "eproject.lst"
@@ -28,6 +54,7 @@
      ))
 
 ;; with the list of all projects
+
 (defvar prj-list)
 
 ;; and the project that was open in the last session (if any)
@@ -74,23 +101,6 @@
 
 ;; directory to run commands, default to prj-directory
 (defvar prj-exec-directory)
-
-;; Here are some default tools for new projects,
-;; (which you might want to adjust to your needs)
-
-(defun prj-default-config ()
-  (setq prj-tools (copy-tree '(
-     ("Make"         "make" "f9")
-     ("Clean"        "make clean" "C-f9")
-     ("Run"          "echo run what" "f8")
-     ("Stop"         "-e eproject-killtool" "C-f8")
-     ("---")
-     ("Configure"    "./configure")
-     ("---")
-     ("Explore Project" "nautilus --browser `pwd` &")
-     ("XTerm In Project" "xterm &")
-     )))
-  )
 
 ;; The current project
 (defvar prj-current)
@@ -400,7 +410,6 @@
   (prj-addhooks)
   (prj-setup-all)
   (prj-isearch-setup)
-  (cd prj-directory)
   (unless (prj-edit-file prj-curfile)
     (eproject-dired)
     ))
@@ -599,10 +608,8 @@ do not belong to  project files"
           (unless (cdr a)
             (message "Added to project: %s" (car a))
             )
-          (setcdr a b)
-          (with-current-buffer b
-            (rename-buffer (car a) t)
-            )))
+          (prj-init-buffer a b)
+          ))
       (when (and a (null (eq a prj-curfile)))
         (setq prj-curfile a)
         (prj-setmenu)
@@ -642,24 +649,30 @@ do not belong to  project files"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Edit another file
 
+(defun prj-init-buffer (a b)
+  (with-current-buffer b
+    (rename-buffer (car a) t)
+    (when prj-set-default-directory
+      (cd prj-directory)
+      ))
+  (setcdr a b)
+  )
+
 (defun prj-find-file (a)
   (when a
     (let (f b pos)
+      (setq b (cdr a))
       (setq f (expand-file-name (car a) prj-directory))
       (setq b (get-file-buffer f))
       (unless b
         (prj-removehooks)
         (setq b (find-file-noselect f))
         (prj-addhooks)
-        (when b
-          (with-current-buffer b
-            (rename-buffer (car a) t)
-            )
-          (when (consp (cdr a))
-            (setq pos (cdr a))
-            )))
+        (when (and b (consp (cdr a)))
+          (setq pos (cdr a))
+          ))
       (when b
-        (setcdr a b)
+        (prj-init-buffer a b)
         (cons b pos)
         ))))
 
@@ -670,6 +683,7 @@ do not belong to  project files"
       (switch-to-buffer (car f))
       (prj-restore-edit-pos (cdr f) (selected-window))
       (prj-setmenu)
+      ;;(message "dir: %s" default-directory)
       )
     (setq prj-curfile a)
     ))
@@ -934,15 +948,15 @@ do not belong to  project files"
            )
          (command-execute cmd)
          )
-        ((let (dir)
+        ((let ((b (current-buffer)) (old-dir default-directory) (new-dir "."))
            (when (string-match "^-in +\\([^[:space:]]+\\) +" cmd)
-             (setq dir (match-string-no-properties 1 cmd))
+             (setq new-dir (match-string-no-properties 1 cmd))
              (setq cmd (substring cmd (match-end 0)))
              )
            (when prj-exec-directory
-             (setq dir (expand-file-name (or dir ".") prj-exec-directory))
+             (setq new-dir (expand-file-name new-dir prj-exec-directory))
              )
-           (if dir (cd dir))
+           (cd new-dir)
            (cond ((string-match "\\(.+\\)& *$" cmd)
                   (start-process-shell-command "eproject-async" nil (match-string 1 cmd))
                   (message (match-string 1 cmd))
@@ -954,7 +968,9 @@ do not belong to  project files"
                   (let ((display-buffer-reuse-frames t) (f (selected-frame)))
                     (compile cmd)
                     (select-frame-set-input-focus f)
-                    )))))))
+                    )))
+           (with-current-buffer b (cd old-dir))
+           ))))
         
 (defun prj-run-tool (a)
   (unless (string-match "^--+$" (car a))
@@ -990,12 +1006,14 @@ do not belong to  project files"
               'grep-history
               (if current-prefix-arg nil default)
               )))))
-    (let ((default-directory prj-directory))
-      (dolist (f (mapcar 'car prj-files))
-        (setq command-args (concat command-args " " f))
-        )
-      (grep command-args)
-      ))
+  (let ((b (current-buffer)) (old-dir default-directory))
+    (dolist (f (mapcar 'car prj-files))
+      (setq command-args (concat command-args " " f))
+      )
+    (when prj-directory (cd prj-directory))
+    (grep command-args)
+    (with-current-buffer b (cd old-dir))
+    ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; add files to the project with dired
