@@ -2,7 +2,7 @@
 ;;
 ;; eproject.el --- project workspaces for emacs
 ;;
-;; Copyright (C) 2008,2009 grischka
+;; Copyright (C) 2008-2010 grischka
 ;;
 ;; Author: grischka -- grischka@users.sourceforge.net
 ;; Created: 24 Jan 2008
@@ -23,28 +23,35 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User-configurable items:
 
-;; The  default tools for new projects,
-(defun prj-default-config ()
-  (setq prj-tools (copy-tree '(
-     ("Make"         "make" "f9")
-     ("Clean"        "make clean" "C-f9")
-     ("Run"          "echo run what" "f8")
-     ("Stop"         "-e eproject-killtool" "C-f8")
-     ("---")
-     ("Configure"    "./configure")
-     ("---")
-     ("Explore Project" "nautilus --browser `pwd` &")
-     ("XTerm In Project" "xterm &")
-     )))
+(defvar prj-default-config '(
+  ("Make"         "make" "f9")
+  ("Clean"        "make clean" "C-f9")
+  ("Run"          "echo run what" "f8")
+  ("Stop"         "-e eproject-killtool" "C-f8")
+  ("---")
+  ("Configure"    "./configure")
+  ("---")
+  ("Explore Project" "nautilus --browser `pwd` &")
+  ("XTerm In Project" "xterm &")
+  )
+  "*The default tools menu for new projects in eproject."
   )
 
+(defvar prj-set-default-directory nil
+  "*Should eproject set the project directory as default-directory
+for all project files (nil/t).")
 
-;; Should the project directory be set as default-directory
-;; for all project files (nil/t):
-(defvar prj-set-default-directory nil)
+(defvar prj-set-framepos nil
+  "*Should eproject restore the last frame position/size (nil/t).")
 
+(defvar prj-set-compilation-frame nil
+  "*Should eproject show compilation output in the other frame (nil/t).")
+  
+(defvar prj-set-multi-isearch nil
+  "*Should eproject setup multi-isearch in the project files (nil/t).")
+
+;; End of user-configurable items
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; no user-configurable items below (probably)
 
 ;; There is a global file (~/.emacs.d/eproject.lst)
 (defun prj-globalfile ()
@@ -54,7 +61,6 @@
      ))
 
 ;; with the list of all projects
-
 (defvar prj-list)
 
 ;; and the project that was open in the last session (if any)
@@ -121,10 +127,9 @@
   (setq prj-removed-files nil)
   (setq prj-curfile nil)
   (setq prj-config nil)
-  (setq prj-tools nil)
   (setq prj-tools-fns nil)
+  (setq prj-tools (copy-tree prj-default-config))
   (prj-reset-functions)
-  (prj-default-config)
   )
 
 (defun prj-reset-functions ()
@@ -154,7 +159,7 @@
 (defvar eproject-directory)
 
 ;; eproject version that created the files
-(defvar eproject-version "0.3")
+(defvar eproject-version "0.4")
 
 ;; Configuration UI
 (eval-and-compile
@@ -462,7 +467,9 @@ do not belong to  project files"
     ))
   (when dir
     (setq dir (directory-file-name dir))
-    (setq name (file-name-nondirectory dir))
+    (unless name 
+      (setq name (file-name-nondirectory dir))
+      )
     (when (and cfg (string-equal cfg prj-default-cfg))
       (setq cfg nil)
       )
@@ -923,7 +930,7 @@ do not belong to  project files"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Run make and other commands
 
-(defun prj-setup-tool-window ()
+(defun prj-compilation-in-frame (cmd)
   (let ((bn "*compilation*") w h b c f)
     (unless (get-buffer-window bn t)
       (setq b (get-buffer-create bn))
@@ -938,7 +945,11 @@ do not belong to  project files"
              (setq w (split-window w h))
              ))
       (set-window-buffer w b)
-      )))
+      ))
+  (let ((display-buffer-reuse-frames t) (f (selected-frame)))
+    (compile cmd)
+    (select-frame-set-input-focus f)
+    ))
 
 (defun prj-run (cmd)
   (cond ((string-match "^-e +" cmd)
@@ -948,7 +959,10 @@ do not belong to  project files"
            )
          (command-execute cmd)
          )
-        ((let ((b (current-buffer)) (old-dir default-directory) (new-dir "."))
+        ((let ((b (current-buffer)) 
+               (old-dir default-directory) 
+               (new-dir ".")
+               )
            (when (string-match "^-in +\\([^[:space:]]+\\) +" cmd)
              (setq new-dir (match-string-no-properties 1 cmd))
              (setq cmd (substring cmd (match-end 0)))
@@ -958,17 +972,16 @@ do not belong to  project files"
              )
            (cd new-dir)
            (cond ((string-match "\\(.+\\)& *$" cmd)
-                  (start-process-shell-command "eproject-async" nil (match-string 1 cmd))
+                  (start-process-shell-command 
+                   "eproject-async" nil (match-string 1 cmd))
                   (message (match-string 1 cmd))
                   )
+                 (prj-set-compilation-frame
+                  (prj-compilation-in-frame cmd)
+                  )
                  (t
-                  (unless (or (fboundp 'ecb-activate) (fboundp 'ewm-init))
-                    (prj-setup-tool-window)
-                    )
-                  (let ((display-buffer-reuse-frames t) (f (selected-frame)))
-                    (compile cmd)
-                    (select-frame-set-input-focus f)
-                    )))
+                  (compile cmd)
+                  ))
            (with-current-buffer b (cd old-dir))
            ))))
         
@@ -1111,7 +1124,7 @@ do not belong to  project files"
     ))
 
 (defun prj-isearch-setup ()
-  (cond (prj-current
+  (cond ((and prj-set-multi-isearch prj-current)
          (setq multi-isearch-next-buffer-function 'prj-isearch-function)
          (setq multi-isearch-pause 'initial)
          (add-hook 'isearch-mode-hook 'multi-isearch-setup)
@@ -1145,17 +1158,11 @@ do not belong to  project files"
       (eproject-open prj-last-open)
 
       ;; restore frame position
-      (unless (fboundp 'ewm-init)
-        (when (and prj-frame-pos prj-initial-frame)
-          (modify-frame-parameters prj-initial-frame prj-frame-pos)
-          ;; emacs bug: when it's too busy it doesn't set frames correctly.
-          (sit-for 0.2)
-          ))))
-
-  (when (fboundp 'ecb-activate)
-    (ecb-activate)
-    )
-  )
+      (when (and prj-set-framepos prj-frame-pos prj-initial-frame)
+        (modify-frame-parameters prj-initial-frame prj-frame-pos)
+        ;; emacs bug: when it's too busy it doesn't set frames correctly.
+        (sit-for 0.2)
+        ))))
 
 (defun prj-command-line-switch (option)
   (setq prj-last-open (pop argv))
