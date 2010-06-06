@@ -762,7 +762,7 @@
 
 (defun prj-qs-find (s f p)
   (save-excursion
-    (let (r beg end start limit)
+    (let (r fn beg end start limit)
       (setq s (concat
                "^[[:space:]]*\\([^[:space:]]*[/\\]\\)?\\("
                (regexp-quote s)
