@@ -587,9 +587,8 @@ do not belong to  project files"
   )
 
 (defun prj-wcc-hook ()
-  (let ((w (selected-window)) (b (window-buffer (selected-window))))
-    ;;(message "wcc-hook: %s" (prin1-to-string (list w b)))
-    (prj-register-buffer b)
+  (dolist (w (window-list))
+    (prj-register-buffer (window-buffer w))
     ))
 
 (defun prj-find-file-hook ()
