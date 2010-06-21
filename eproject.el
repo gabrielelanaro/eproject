@@ -24,12 +24,12 @@
 ;; User-configurable items:
 
 (defvar prj-default-config '(
-  ("Make"         "make" "f9")
-  ("Clean"        "make clean" "C-f9")
-  ("Run"          "echo run what" "f8")
-  ("Stop"         "-e eproject-killtool" "C-f8")
+  ("Make"       "make" "f9")
+  ("Clean"      "make clean" "C-f9")
+  ("Run"        "echo run what" "f8")
+  ("Stop"       "-e eproject-killtool" "C-f8")
   ("---")
-  ("Configure"    "./configure")
+  ("Configure"  "./configure")
   ("---")
   ("Explore Project" "nautilus --browser `pwd` &")
   ("XTerm In Project" "xterm &")
@@ -56,9 +56,10 @@ for all project files (nil/t).")
 ;; There is a global file (~/.emacs.d/eproject.lst)
 (defun prj-globalfile ()
   (expand-file-name "eproject.lst"
-     (if (boundp 'user-emacs-directory) user-emacs-directory
-       "~/.emacs.d/")
-     ))
+     (if (boundp 'user-emacs-directory) 
+         user-emacs-directory
+         "~/.emacs.d/"
+         )))
 
 ;; with the list of all projects
 (defvar prj-list)
