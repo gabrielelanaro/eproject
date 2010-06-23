@@ -23,6 +23,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; User-configurable items:
 
+(defvar prj-keybindings '(
+  ([f5]         eproject-setup-toggle  always)
+  ([M-right]    eproject-nextfile)
+  ([M-left]     eproject-prevfile)
+  ([C-f5]       eproject-dired)
+  )
+  "Key bindings in eproject"
+  )
+
 (defvar prj-default-config '(
   ("Make"       "make" "f9")
   ("Clean"      "make clean" "C-f9")
@@ -748,10 +757,12 @@ do not belong to  project files"
         (setcdr a map)
         (push (cons 'eproject-mode map) minor-mode-map-alist)
         )
+    (dolist (k prj-keybindings)
+      (when (or f (eq (caddr k) 'always))
+        (define-key map (car k) (cadr k))
+        ))
+
     (when f
-      (define-key map [M-right] 'eproject-nextfile)
-      (define-key map [M-left] 'eproject-prevfile)
-      (define-key map [C-f5] 'eproject-dired)
       (let ((n 0) fn s)
         (dolist (a prj-tools)
           (unless (setq fn (nth n prj-tools-fns))
@@ -762,9 +773,7 @@ do not belong to  project files"
           (setq n (1+ n))
           (when (setq s (caddr a))
             (define-key map (prj-parse-key s) (and f fn))
-            ))))
-    (define-key map [f5] 'eproject-setup-toggle)
-    ))
+            ))))))
 
 (defun prj-parse-key (s)
   (read
