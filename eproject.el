@@ -50,6 +50,9 @@
   "*Should eproject automatically add/remove files to/from the project (nil/t)")
   ; To apply, close and reopen the project.
 
+(defvar prj-rename-buffers t
+  "*Should eproject rename buffers to project-relative filenames (nil/t)")
+
 (defvar prj-set-default-directory nil
   "*Should eproject set the project directory as default-directory
 for all project files (nil/t).")
@@ -339,6 +342,14 @@ for all project files (nil/t).")
   (expand-file-name (or (caddr prj-current) prj-default-cfg) prj-directory)
   )
 
+(defun prj-get-buffer (a)
+  (cond ((buffer-live-p (cdr a))
+         (cdr a)
+         )
+        (prj-directory
+         (get-file-buffer (expand-file-name (car a) prj-directory))
+         )))
+
 (defun prj-loadconfig (a)
   (let (lf e)
     (prj-reset)
@@ -366,17 +377,21 @@ for all project files (nil/t).")
       (prj-removehooks)
       (setq w (selected-window))
       (setq c (window-buffer w))
-      (dolist (f prj-files)
-        (cond ((setq b (get-buffer (car f)))
+      (dolist (a prj-files)
+        (setq b (prj-get-buffer a))
+        (cond (b
                (set-window-buffer w b t)
                (with-current-buffer b
                  (let ((s (line-number-at-pos (window-start w)))
                        (p (line-number-at-pos (window-point w)))
                        )
-                   (push (list (car f) s p) files)
+                   (push (list (car a) s p) files)
                    )))
-              (t ;;(consp (cdr f))
-               (push f files)
+              ((consp (cdr a))
+               (push a files)
+               )
+              (t
+               (push (list (car a)) files)
                )))
       (set-window-buffer w c t)
       (prj-addhooks)
@@ -455,17 +470,15 @@ for all project files (nil/t).")
     ))
 
 (defun eproject-killbuffers (&optional from-project)
-  "If called interactively kills all buffers that
-do not belong to  project files"
+  "If called interactively kills all buffers that do not belong to project files"
   (interactive)
-  (let (a b)
-    (dolist (f prj-files)
-      (setq b (get-buffer (car f)))
-      (if b
-          (setq a (cons (list b) a))
-          ))
+  (let (l b)
+    (dolist (a prj-files)
+      (setq b (prj-get-buffer a))
+      (if b (setq l (cons (list b) l)))
+      )
     (dolist (b (buffer-list))
-      (when (eq (consp (assoc b a)) from-project)
+      (when (eq (consp (assoc b l)) from-project)
         (kill-buffer b)
         ))))
 
@@ -667,7 +680,9 @@ do not belong to  project files"
 
 (defun prj-init-buffer (a b)
   (with-current-buffer b
-    (rename-buffer (car a) t)
+    (when prj-rename-buffers
+      (rename-buffer (car a) t)
+      )
     (when prj-set-default-directory
       (cd prj-directory)
       ))
@@ -676,12 +691,11 @@ do not belong to  project files"
 
 (defun prj-find-file (a)
   (when a
-    (let (f b pos)
-      (setq b (cdr a))
-      (setq f (expand-file-name (car a) prj-directory))
-      (setq b (get-file-buffer f))
+    (let (b pos f)
+      (setq b (prj-get-buffer a))
       (unless b
         (prj-removehooks)
+        (setq f (expand-file-name (car a) prj-directory))
         (setq b (find-file-noselect f))
         (prj-addhooks)
         (when (and b (consp (cdr a)))
@@ -1100,7 +1114,7 @@ do not belong to  project files"
 ;; isearch in all project files
 
 (defun prj-isearch-function (b wrap)
-  (let (a d)
+  (let (a)
     (or b (setq b (current-buffer)))
     (cond (wrap
            (if isearch-forward
@@ -1113,13 +1127,8 @@ do not belong to  project files"
                (setq a (prj-prev-file prj-files a))
                )
             ))
-    (when a
-      (if (buffer-live-p (cdr a))
-          (setq d (cdr a))
-          (setq d (car (prj-find-file a)))
-          ))
+    (car (prj-find-file a))
     ;; (print `(prj-isearch (wrap . ,wrap) ,b ,d) (get-buffer "*Messages*"))
-    d
     ))
 
 (defun prj-isearch-setup ()
