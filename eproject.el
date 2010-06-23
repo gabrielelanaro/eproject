@@ -1165,6 +1165,9 @@ for all project files (nil/t).")
       ;; open last project
       (eproject-open prj-last-open)
 
+      ;; emacs bug: deferred jit-lock is dropped if run from idle timer
+      (and jit-lock-mode jit-lock-defer-time (jit-lock-function (point)))
+
       ;; restore frame position
       (when (and prj-set-framepos prj-frame-pos prj-initial-frame)
         (modify-frame-parameters prj-initial-frame prj-frame-pos)
