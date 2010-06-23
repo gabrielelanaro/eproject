@@ -46,6 +46,10 @@
   "*The default tools menu for new projects in eproject."
   )
 
+(defvar prj-autotracking t
+  "*Should eproject automatically add/remove files to/from the project (nil/t)")
+  ; To apply, close and reopen the project.
+
 (defvar prj-set-default-directory nil
   "*Should eproject set the project directory as default-directory
 for all project files (nil/t).")
@@ -537,10 +541,7 @@ do not belong to  project files"
          (read-file-name "Add file to project: " nil nil t nil)
          )))
   (unless prj-current (error "No project open"))
-  (let ((a (prj-insert-file f (prj-config-get-result 'f))))
-    (unless (cdr a)
-      (message "Added to project: %s" (car a))
-      ))
+  (prj-insert-file f (prj-config-get-result 'f))
   (prj-config-print)
   (prj-setmenu)
   )
@@ -585,10 +586,11 @@ do not belong to  project files"
 ;; Hook functions to track opening/closing files from emacs
 
 (defun prj-addhooks ()
-  (add-hook 'kill-buffer-hook 'prj-kill-buffer-hook)
-  (add-hook 'find-file-hook 'prj-find-file-hook)
-  (add-hook 'window-configuration-change-hook 'prj-wcc-hook)
-  )
+  (when prj-autotracking
+    (add-hook 'kill-buffer-hook 'prj-kill-buffer-hook)
+    (add-hook 'find-file-hook 'prj-find-file-hook)
+    (add-hook 'window-configuration-change-hook 'prj-wcc-hook)
+    ))
 
 (defun prj-removehooks ()
   (remove-hook 'window-configuration-change-hook 'prj-wcc-hook)
@@ -621,9 +623,6 @@ do not belong to  project files"
       (unless a
         (setq a (prj-insert-file f nil t))
         (when a
-          (unless (cdr a)
-            (message "Added to project: %s" (car a))
-            )
           (prj-init-buffer a b)
           ))
       (when (and a (null (eq a prj-curfile)))
@@ -643,6 +642,7 @@ do not belong to  project files"
           (setq prj-files (prj-add-list prj-files a))
           )
       (setq prj-removed-files (prj-del-list prj-removed-files a))
+      (message "Added to project: %s" r)
       )
     a))
 
@@ -1052,7 +1052,7 @@ do not belong to  project files"
           (setq n (1+ n))
           (setq prj-curfile a)
           ))
-      (message "Added to project: %d file(s)" n)
+      (if (> n 1) (message "Added to project: %d file(s)" n))
       (prj-setmenu)
       )))
 
