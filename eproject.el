@@ -1056,14 +1056,6 @@ do not belong to  project files"
       (prj-setmenu)
       )))
 
-(defun prj-dired-run ()
-  (interactive)
-  (let ((f (dired-get-marked-files)) c)
-    (and (setq c (pop f))
-         (null f)
-         (let ((prj-directory (file-name-directory c)))
-           (prj-run c)))))
-
 (defun eproject-dired ()
   "Start a dired window with the project directory."
   (interactive)
@@ -1072,9 +1064,7 @@ do not belong to  project files"
     ;;(message "Use 'a' to add marked or single files to the project.")
     (dired prj-directory)
     (let ((map dired-mode-map))
-      (define-key map [mouse-2] 'dired-find-file)
       (define-key map "a" 'prj-dired-addfiles)
-      (define-key map "r" 'prj-dired-run)
       (define-key map [menu-bar operate command] '("Add to Project"
         "Add current or marked file(s) to project" . prj-dired-addfiles))
       )))
