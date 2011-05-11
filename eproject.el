@@ -974,6 +974,42 @@ for all project files (nil/t).")
     (select-frame-set-input-focus f)
     ))
 
+
+(defun prj-option-in (arg fun)
+  (let ((old-dir default-directory))
+    (cd arg)
+    (save-excursion (funcall fun))
+    (cd old-dir)))
+
+(defun prj-option-virt (arg fun)
+  (virtualenv-activate arg)
+  (funcall fun)
+  (virtualenv-deactivate))
+
+(defun prj-option-workon (arg fun)
+  (virtualenv-workon arg)
+  (funcall fun)
+  (virtualenv-deactivate))
+
+(devar prj-run-options '(("in" prj-option-in) ("virt" prj-option-virt) ("workon" prj-option-workon)))
+
+;; Defining prj-run-new
+;; special case of the -e
+;; wrap all in a cd new dir cd old dir
+;; TODO: for each of the option
+;; - match the option
+;; - apply partially the option to the context
+;; - save the resulting context in a list
+;;
+;; then
+;; apply the multiple contexts to the command
+(defun prj-run-new (cmd)
+  (dolist (opt prj-run-options)
+    (if string-match (concat "^" (first opt) cmd)
+      (add-to-list contexts )))
+
+  )
+
 (defun prj-run (cmd)
   (cond ((string-match "^-e +" cmd)
          (setq cmd (read (substring cmd (match-end 0))))
@@ -984,16 +1020,39 @@ for all project files (nil/t).")
          )
         ((let ((b (current-buffer)) 
                (old-dir default-directory) 
-               (new-dir ".")
+               (new-dir (or prj-directory "."))
                )
+
+           ;; There is some code duplication but I wasn't able to find
+           ;; a way to implement a sort of 'context manager' in lisp
            (when (string-match "^-in +\\([^[:space:]]+\\) +" cmd)
              (setq new-dir (match-string-no-properties 1 cmd))
              (setq cmd (substring cmd (match-end 0)))
              )
+           
+           ;; Virt command
+           (when (string-match "^-virt +\\([^[:space:]]+\\) +" cmd)
+             (save-match-data
+               (cd new-dir)
+               (virtualenv-activate (match-string-no-properties 1 cmd))
+               (cd old-dir))
+             (setq cmd (substring cmd (match-end 0)))
+             )
+           ;; Workon command
+           (when (string-match "^-workon +\\([^[:space:]]+\\) +" cmd)
+             (save-match-data
+               (cd new-dir)
+               (virtualenv-workon (match-string-no-properties 1 cmd))
+               (cd old-dir))
+             (setq cmd (substring cmd (match-end 0)))
+             )
+           
            (when prj-exec-directory
              (setq new-dir (expand-file-name new-dir prj-exec-directory))
              )
            (cd new-dir)
+
+           
            (cond ((string-match "\\(.+\\)& *$" cmd)
                   (start-process-shell-command 
                    "eproject-async" nil (match-string 1 cmd))
@@ -1005,9 +1064,11 @@ for all project files (nil/t).")
                  (t
                   (compile cmd)
                   ))
+
            (with-current-buffer b (cd old-dir))
+
            ))))
-        
+      
 (defun prj-run-tool (a)
   (unless (string-match "^--+$" (car a))
     (prj-run (or (cadr a) (car a)))
